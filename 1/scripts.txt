@@ -1,0 +1,25 @@
+# Actualizar repositorios de paquetes
+sudo yum update -y
+
+# Instalar Git
+sudo yum install git -y
+
+# Clonar el repositorio de GitHub
+git clone https://github.com/st0263eafit/st0263-241.git
+
+# Crear directorio en HDFS
+hdfs dfs -mkdir /user/hadoop/datasets
+hdfs dfs -mkdir /user/hadoop/datasets/gutenberg-small
+
+# Copiar archivos locales a HDFS
+hdfs dfs -put st0263-241/bigdata/datasets/gutenberg-small/*.txt /user/hadoop/datasets/gutenberg-small/
+
+# Copiar archivos desde S3 a HDFS
+hadoop distcp s3://jecastrognotebooks/datasets/airlines.csv /user/hadoop/datasets/
+
+# Copia recursiva de datos locales a HDFS
+hdfs dfs -copyFromLocal /st0263-241/bigdata/datasets/* /user/hadoop/datasets/
+
+# Listar archivos en HDFS
+hdfs dfs -ls /user/hadoop/datasets
+hdfs dfs -ls /user/hadoop/datasets/gutenberg-small/

@@ -1,0 +1,71 @@
+# Conectar al nodo master
+ssh -i ~/vockey.pem hadoop@ec2.compute-1.amazonaws.com
+
+# Iniciar Beeline y crear la base de datos y tabla
+beeline
+!connect jdbc:hive2://localhost:10000
+CREATE DATABASE usernamedb;
+USE usernamedb;
+CREATE TABLE HDI (
+    id INT,
+    country STRING,
+    hdi FLOAT,
+    lifeex INT,
+    mysch INT,
+    eysch INT,
+    gni INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+# Opción 1: Copiar datos a HDFS
+hdfs dfs -put st0263-241/datasets/onu/hdi-data.csv /user/hive/warehouse/usernamedb.db/hdi/
+
+# Crear tabla externa en S3
+USE usernamedb;
+CREATE EXTERNAL TABLE HDI (
+    id INT,
+    country STRING,
+    hdi FLOAT,
+    lifeex INT,
+    mysch INT,
+    eysch INT,
+    gni INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION 's3://jecastrognotebooks/onu/hdi/';
+
+# Ejecutar consultas
+USE usernamedb;
+SHOW TABLES;
+DESCRIBE HDI;
+SELECT * FROM HDI;
+SELECT country, gni FROM HDI WHERE gni > 2000;
+
+# Cambiar al usuario hadoop
+sudo su - hadoop
+
+# Verificar que has cambiado al usuario hadoop
+whoami
+
+# Ajustar permisos del directorio /user
+hdfs dfs -chmod 777 /user
+
+# Ajustar permisos del directorio /user/hive/warehouse
+hdfs dfs -chmod -R 777 /user/hive/warehouse
+
+# Conectarse a Beeline
+beeline
+!connect jdbc:hive2://localhost:10000
+
+# Usar la base de datos
+USE usernamedb;
+
+# Ejecutar el JOIN
+SELECT h.country, gni, expct
+FROM HDI h
+JOIN EXPO e ON (h.country = e.country)
+WHERE gni > 2000;

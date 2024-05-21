@@ -1,0 +1,33 @@
+# Conectar al nodo master
+ssh -i ~/vockey.pem hadoop@ec2.compute-1.amazonaws.com
+
+# Instalar Python 3 y pip
+sudo yum install python3-pip -y
+
+# Instalar MRJOB
+sudo pip3 install mrjob
+
+# Correr la versión serial / secuencial
+cd st0263-241/bigdata/02-mapreduce
+vim wordcount-local.py
+
+python wordcount-local.py ../datasets/gutenberg-small/*.txt > salida-serial.txt
+more salida-serial.txt
+
+# Probar MRJOB en modo local
+python wordcount-mr.py ../datasets/gutenberg-small/*.txt
+
+# Copiar los datasets a HDFS
+hdfs dfs -mkdir /user/hadoop/datasets
+hdfs dfs -mkdir /user/hadoop/datasets/gutenberg-small
+hdfs dfs -put st0263-241/bigdata/datasets/gutenberg-small/*.txt /user/hadoop/datasets/gutenberg-small/
+
+export HADOOP_STREAMING_HOME=/usr/lib/hadoop-mapreduce
+
+# Añadir la variable de entorno al archivo .bashrc
+echo 'export HADOOP_STREAMING_HOME=/usr/lib/hadoop-mapreduce' >> ~/.bashrc
+source ~/.bashrc
+
+# Ejecutar MRJOB en Hadoop
+python wordcount-mr.py hdfs:///user/hadoop/datasets/gutenberg-small/*.txt -r hadoop --output-dir hdfs:///user/hadoop/result3 --hadoop-streaming-jar $HADOOP_STREAMING_HOME/hadoop-streaming.jar
+
